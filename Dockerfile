@@ -1,13 +1,15 @@
-FROM python:3.10
+FROM nginx/unit:1.28.0-python3.10
 
-WORKDIR /app
+COPY ./config/config.json /docker-entrypoint.d/config.json
 
-RUN apt-get update && apt-get upgrade
-RUN pip install --upgrade pip
+RUN mkdir build
 
-COPY requirements.txt .
-COPY . /app
+COPY . ./build
 
-RUN pip install -r requirements.txt
+RUN apt update && apt install -y python3-pip                                  \
+    && pip3 install -r /build/requirements.txt                               \
+    && apt remove -y python3-pip                                              \
+    && apt autoremove --purge -y                                              \
+    && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/*.list
 
-CMD ["fastapi", "run", "main.py"]
+EXPOSE 80
